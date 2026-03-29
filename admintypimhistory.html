@@ -49,6 +49,7 @@ box-shadow:0 0 5px rgba(0,0,0,0.1);
 <p><b>User ID:</b> ${item.user_id}</p>
 <p><b>Market:</b> ${item.market}</p>
 <p><b>Amount:</b> ₹${item.total}</p>
+<p><b>Date:</b> ${item.created_at ? new Date(item.created_at).toLocaleString() : "N/A"}</p>
 `;
 
 // 🔥 TEXT / IMAGE SHOW
