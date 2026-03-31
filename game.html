@@ -81,7 +81,24 @@ input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;
 </table>
 </div>
 
-<div id="play" class="game container"></div>
+<div id="play" class="game container">
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+<button onclick="showPlay('typing')">Typing</button>
+<button onclick="showPlay('image')">Image</button>
+</div>
+
+<div id="typingBox">
+<textarea id="typingData"></textarea>
+<input id="typingAmount">
+<div class="submit" onclick="submitTyping()">SUBMIT</div>
+</div>
+
+<div id="imageBox" style="display:none;">
+<input type="file" id="imageInput">
+<input id="imageAmount">
+<div class="submit" onclick="submitImage()">SUBMIT</div>
+</div>
+</div>
 
 <div class="bottom">
 <div class="total" id="total">₹ 0</div>
@@ -99,14 +116,15 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 async function loadWallet(){
 let {data}=await client.from("login").select("balance").eq("id",user.id).single();
-document.getElementById("wallet").innerText="₹ "+data.balance;
-document.getElementById("userId").innerText="ID: "+user.id;
+wallet.innerText="₹ "+data.balance;
+userId.innerText="ID: "+user.id;
 }
 loadWallet();
 
 let dataArr=[];
 let copyMap={};
 
+// GAME LOGIC SAME
 function add(num,val){
 val = Number(val)||0;
 dataArr = dataArr.filter(i=>i.number!==num);
@@ -114,148 +132,94 @@ if(val>0){ dataArr.push({number:num,amount:val}); }
 updateTotal();
 }
 
-function generateCross(){
-let n1=num1.value;
-let n2=num2.value;
-let amt=Number(points.value)||0;
-
-if(!n1||!n2||!amt){showMsg("Fill all ❌","red");return;}
-
-dataArr = dataArr.filter(i=>!i.crossing);
-crossGrid.innerHTML="";
-
-let set=new Set();
-
-for(let i of n1){
-for(let j of n2){
-let pair=i+j;
-if(!set.has(pair)){
-set.add(pair);
-dataArr.push({number:pair,amount:amt,crossing:true});
-crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${amt}</div>`;
-}
-}
+// SHOW PLAY FIX
+function showPlay(type){
+typingBox.style.display = type==="typing" ? "block":"none";
+imageBox.style.display = type==="image" ? "block":"none";
 }
 
-updateTotal();
-}
+// TYPING SUBMIT
+function submitTyping(){
+let txt = typingData.value;
+let amt = Number(typingAmount.value)||0;
 
-function generateCopy(){
-let d=digits.value;
-let a=Number(amt.value)||0;
-let type=document.querySelector('input[name="p"]:checked').value;
+if(!txt || !amt){ alert("Fill data"); return; }
 
-if(!d||!a){showMsg("Fill data ❌","red");return;}
+let arr = txt.match(/\d{1,2}/g) || [];
 
-dataArr = dataArr.filter(i=>!i.copy);
-copyMap={};
-
-table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
-
-let arr=d.toString().match(/.{1,2}/g);
-
-arr.forEach(num=>{
-if(num.length==1) num="0"+num;
-
-if(!copyMap[num]) addCopy(num,a);
-
-if(type=="with"){
-let rev=num.split("").reverse().join("");
-if(rev!=num && !copyMap[rev]) addCopy(rev,a);
-}
+arr.forEach(n=>{
+n = n.padStart(2,'0');
+dataArr.push({number:n,amount:amt});
 });
 
 updateTotal();
 }
 
-function addCopy(num,a){
-copyMap[num]=true;
-dataArr.push({number:num,amount:a,copy:true});
+// IMAGE SUBMIT
+function submitImage(){
+let amt = Number(imageAmount.value)||0;
+if(!amt){ alert("Enter amount"); return; }
 
-table.innerHTML+=`<tr>
-<td>${num}</td>
-<td>${a}</td>
-<td><button onclick="this.parentElement.parentElement.remove()">X</button></td>
-</tr>`;
+dataArr.push({number:"IMG",amount:amt});
+updateTotal();
 }
 
+// TOTAL
 function updateTotal(){
 let t=dataArr.reduce((s,i)=>s+i.amount,0);
-document.getElementById("total").innerText="₹ "+t;
+total.innerText="₹ "+t;
 }
 
+// GAME SWITCH
 function showGame(id){
 document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-// POPUP
-function showMsg(text,color){
-let div=document.createElement("div");
-div.style.position="fixed";
-div.style.top="50%";
-div.style.left="50%";
-div.style.transform="translate(-50%,-50%)";
-div.style.background=color;
-div.style.color="#fff";
-div.style.padding="15px 25px";
-div.style.borderRadius="10px";
-div.style.zIndex="9999";
-div.innerText=text;
-document.body.appendChild(div);
-setTimeout(()=>{div.remove();},1500);
-}
-
-// JODI
+// GRID
 for(let i=0;i<100;i++){
 let n=i.toString().padStart(2,'0');
 jodiGrid.innerHTML+=`<div class="box">${n}<input oninput="add('${n}',this.value)"></div>`;
 }
 
-// HARUF
 for(let i=0;i<10;i++){
 harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 }
 
-// SUBMIT
+// FINAL SUBMIT
 async function submitAll(){
 
-let total = dataArr.reduce((s,i)=>s+i.amount,0);
+let totalAmt = dataArr.reduce((s,i)=>s+i.amount,0);
 
-if(total<=0){
-showMsg("No Data ❌","red");
+if(totalAmt<=0){
+alert("No Data");
 return;
 }
 
-let {data:userData} = await client.from("login").select("balance").eq("id",user.id).single();
+let {data:userData}=await client.from("login").select("balance").eq("id",user.id).single();
 
-if(userData.balance < total){
-showMsg("Amount is low ❌","red");
+if(userData.balance < totalAmt){
+alert("Amount is low ❌");
 return;
 }
 
-let newBal = userData.balance - total;
+let newBal = userData.balance - totalAmt;
 
 await client.from("login").update({balance:newBal}).eq("id",user.id);
 
-document.getElementById("wallet").innerText="₹ "+newBal;
+wallet.innerText="₹ "+newBal;
 
-showMsg("Submit OK ✅","green");
+alert("Submit OK ✅");
 
-// clear
-digits.value="";
-amt.value="";
-num1.value="";
-num2.value="";
-points.value="";
-
+// RESET
 dataArr=[];
 copyMap={};
-crossGrid.innerHTML="";
-table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
-
 updateTotal();
+
+typingData.value="";
+typingAmount.value="";
+imageAmount.value="";
 }
 
 </script>
