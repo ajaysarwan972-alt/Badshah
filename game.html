@@ -116,15 +116,14 @@ const user = JSON.parse(localStorage.getItem("user"));
 
 async function loadWallet(){
 let {data}=await client.from("login").select("balance").eq("id",user.id).single();
-wallet.innerText="₹ "+data.balance;
-userId.innerText="ID: "+user.id;
+document.getElementById("wallet").innerText="₹ "+data.balance;
+document.getElementById("userId").innerText="ID: "+user.id;
 }
 loadWallet();
 
 let dataArr=[];
 let copyMap={};
 
-// GAME LOGIC SAME
 function add(num,val){
 val = Number(val)||0;
 dataArr = dataArr.filter(i=>i.number!==num);
@@ -132,51 +131,82 @@ if(val>0){ dataArr.push({number:num,amount:val}); }
 updateTotal();
 }
 
-// SHOW PLAY FIX
-function showPlay(type){
-typingBox.style.display = type==="typing" ? "block":"none";
-imageBox.style.display = type==="image" ? "block":"none";
+function updateTotal(){
+let t=dataArr.reduce((s,i)=>s+i.amount,0);
+document.getElementById("total").innerText="₹ "+t;
 }
 
-// TYPING SUBMIT
-function submitTyping(){
-let txt = typingData.value;
-let amt = Number(typingAmount.value)||0;
+function generateCross(){
+let n1=num1.value;
+let n2=num2.value;
+let amt=Number(points.value)||0;
 
-if(!txt || !amt){ alert("Fill data"); return; }
+if(!n1||!n2||!amt){alert("Fill all");return;}
 
-let arr = txt.match(/\d{1,2}/g) || [];
+dataArr = dataArr.filter(i=>!i.crossing);
+crossGrid.innerHTML="";
 
-arr.forEach(n=>{
-n = n.padStart(2,'0');
-dataArr.push({number:n,amount:amt});
+let set=new Set();
+
+for(let i of n1){
+for(let j of n2){
+let pair=i+j;
+if(!set.has(pair)){
+set.add(pair);
+dataArr.push({number:pair,amount:amt,crossing:true});
+crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${amt}</div>`;
+}
+}
+}
+
+updateTotal();
+}
+
+function generateCopy(){
+let d=digits.value;
+let a=Number(amt.value)||0;
+let type=document.querySelector('input[name="p"]:checked').value;
+
+if(!d||!a){alert("Fill data");return;}
+
+dataArr = dataArr.filter(i=>!i.copy);
+copyMap={};
+
+table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
+
+let arr=d.toString().match(/.{1,2}/g);
+
+arr.forEach(num=>{
+if(num.length==1) num="0"+num;
+
+if(!copyMap[num]) addCopy(num,a);
+
+if(type=="with"){
+let rev=num.split("").reverse().join("");
+if(rev!=num && !copyMap[rev]) addCopy(rev,a);
+}
 });
 
 updateTotal();
 }
 
-// IMAGE SUBMIT
-function submitImage(){
-let amt = Number(imageAmount.value)||0;
-if(!amt){ alert("Enter amount"); return; }
+function addCopy(num,a){
+copyMap[num]=true;
+dataArr.push({number:num,amount:a,copy:true});
 
-dataArr.push({number:"IMG",amount:amt});
-updateTotal();
+table.innerHTML+=`<tr>
+<td>${num}</td>
+<td>${a}</td>
+<td><button onclick="this.parentElement.parentElement.remove()">X</button></td>
+</tr>`;
 }
 
-// TOTAL
-function updateTotal(){
-let t=dataArr.reduce((s,i)=>s+i.amount,0);
-total.innerText="₹ "+t;
-}
-
-// GAME SWITCH
 function showGame(id){
 document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-// GRID
+// load grids
 for(let i=0;i<100;i++){
 let n=i.toString().padStart(2,'0');
 jodiGrid.innerHTML+=`<div class="box">${n}<input oninput="add('${n}',this.value)"></div>`;
@@ -187,24 +217,40 @@ harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.valu
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 }
 
+// typing/image
+function showPlay(type){
+typingBox.style.display = type=="typing" ? "block":"none";
+imageBox.style.display = type=="image" ? "block":"none";
+}
+
+function submitTyping(){
+if(!typingData.value || !typingAmount.value){alert("Fill data");return;}
+alert("Typing Submitted ✅");
+}
+
+function submitImage(){
+if(!imageInput.files[0] || !imageAmount.value){alert("Fill data");return;}
+alert("Image Submitted ✅");
+}
+
 // FINAL SUBMIT
 async function submitAll(){
 
-let totalAmt = dataArr.reduce((s,i)=>s+i.amount,0);
+let total = dataArr.reduce((s,i)=>s+i.amount,0);
 
-if(totalAmt<=0){
-alert("No Data");
+if(total<=0){
+alert("No Data ❌");
 return;
 }
 
-let {data:userData}=await client.from("login").select("balance").eq("id",user.id).single();
+let {data:userData} = await client.from("login").select("balance").eq("id",user.id).single();
 
-if(userData.balance < totalAmt){
-alert("Amount is low ❌");
+if(userData.balance < total){
+alert("Amount is Low ❌");
 return;
 }
 
-let newBal = userData.balance - totalAmt;
+let newBal = userData.balance - total;
 
 await client.from("login").update({balance:newBal}).eq("id",user.id);
 
@@ -212,14 +258,19 @@ wallet.innerText="₹ "+newBal;
 
 alert("Submit OK ✅");
 
-// RESET
+// clear
+digits.value="";
+amt.value="";
+num1.value="";
+num2.value="";
+points.value="";
+
 dataArr=[];
 copyMap={};
-updateTotal();
+crossGrid.innerHTML="";
+table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
 
-typingData.value="";
-typingAmount.value="";
-imageAmount.value="";
+updateTotal();
 }
 
 </script>
