@@ -8,17 +8,9 @@
 
 <style>
 body{font-family:Arial;margin:0;background:#e5e7eb;}
-
-.header{
-position:fixed;top:10px;left:10px;right:10px;
-background:#fff;padding:10px;border-radius:20px;
-display:flex;justify-content:space-between;
-z-index:999;
-}
-
+.header{position:fixed;top:10px;left:10px;right:10px;background:#fff;padding:10px;border-radius:20px;display:flex;justify-content:space-between;z-index:999;}
 #userId{background:green;color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;}
 #wallet{background:red;color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;}
-
 .topBtns{margin-top:80px;display:flex;justify-content:space-around;}
 .topBtn{width:18%;padding:10px;border-radius:20px;color:#fff;text-align:center;cursor:pointer;font-size:12px;}
 .btn1{background:#6c5ce7;}
@@ -26,16 +18,12 @@ z-index:999;
 .btn3{background:#0984e3;}
 .btn4{background:#e17055;}
 .btn5{background:#111;}
-
 .game{display:none;}
 .active{display:block;}
-
 .container{margin:10px;background:#fff;padding:15px;border-radius:15px;padding-bottom:120px;}
-
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .box{background:#fff;padding:10px;border-radius:10px;text-align:center;border:1px solid #ddd;}
 input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
-
 .bottom{position:fixed;bottom:0;width:100%;display:flex;}
 .total{width:50%;background:linear-gradient(to right,blue,red);color:#fff;text-align:center;padding:15px;}
 .submit{width:50%;background:green;color:#fff;text-align:center;padding:15px;}
@@ -84,14 +72,10 @@ input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;
 <input id="digits">
 <label>ENTER AMOUNT</label>
 <input id="amt">
-
 <br><br>
-
 <label><input type="radio" name="p" value="with" checked> With Palti</label>
 <label><input type="radio" name="p" value="without"> Without Palti</label>
-
 <button onclick="generateCopy()">ADD</button>
-
 <table id="table" border="1" width="100%">
 <tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>
 </table>
@@ -123,64 +107,53 @@ input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;
 
 <script>
 
-const client = supabase.createClient(
-"https://katbdbzoufiblnnsoxkk.supabase.co",
-"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
-);
-
-const user = JSON.parse(localStorage.getItem("user"));
-const market = localStorage.getItem("market") || "UNKNOWN";
-
 let dataArr=[];
 let copyMap={};
 
-// ADD
 function add(num,val){
 val = Number(val)||0;
-
 dataArr = dataArr.filter(i=>i.number!==num);
-
-if(val>0){
-dataArr.push({number:num,amount:val});
-}
-
+if(val>0){ dataArr.push({number:num,amount:val}); }
 updateTotal();
 }
 
-// CROSSING FIX
 function generateCross(){
-
-
+let n1=num1.value;
+let n2=num2.value;
+let amt=Number(points.value)||0;
 
 if(!n1||!n2||!amt){alert("Fill all");return;}
 
 dataArr = dataArr.filter(i=>!i.crossing);
-
 crossGrid.innerHTML="";
+
+let set=new Set();
 
 for(let i of n1){
 for(let j of n2){
-
 let pair=i+j;
 
+if(!set.has(pair)){
+set.add(pair);
 dataArr.push({number:pair,amount:amt,crossing:true});
-
 crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${amt}</div>`;
+}
 }
 }
 
 updateTotal();
 }
 
-// COPY FIX
 function generateCopy(){
-
+let d=digits.value;
+let a=Number(amt.value)||0;
 let type=document.querySelector('input[name="p"]:checked').value;
 
 if(!d||!a){alert("Fill data");return;}
 
 dataArr = dataArr.filter(i=>!i.copy);
 copyMap={};
+
 table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
 
 let arr=d.toString().match(/.{1,2}/g);
@@ -196,9 +169,6 @@ if(rev!=num && !copyMap[rev]) addCopy(rev,a);
 }
 });
 
-digits.value="";
-amt.value="";
-
 updateTotal();
 }
 
@@ -213,14 +183,11 @@ table.innerHTML+=`<tr>
 </tr>`;
 }
 
-// TOTAL
 function updateTotal(){
-let total=dataArr.reduce((s,i)=>s+i.amount,0);
-total.innerText="₹ "+total;
-document.getElementById("total").innerText="₹ "+total;
+let t=dataArr.reduce((s,i)=>s+i.amount,0);
+document.getElementById("total").innerText="₹ "+t;
 }
 
-// UI
 function showGame(id){
 document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -236,6 +203,26 @@ jodiGrid.innerHTML+=`<div class="box">${n}<input oninput="add('${n}',this.value)
 for(let i=0;i<10;i++){
 harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
+}
+
+// SUBMIT
+function submitAll(){
+
+alert("Submitted");
+
+// clear only here
+digits.value="";
+amt.value="";
+num1.value="";
+num2.value="";
+points.value="";
+
+dataArr=[];
+copyMap={};
+crossGrid.innerHTML="";
+table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
+
+updateTotal();
 }
 
 </script>
