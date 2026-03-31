@@ -132,57 +132,99 @@ const user = JSON.parse(localStorage.getItem("user"));
 const market = localStorage.getItem("market") || "UNKNOWN";
 
 let dataArr=[];
+let copyMap={};
 
-// ADD SYSTEM (same)
+// ADD
 function add(num,val){
-val = Number(val) || 0;
+val = Number(val)||0;
 
-dataArr = dataArr.filter(i => i.number !== num);
+dataArr = dataArr.filter(i=>i.number!==num);
 
-if(val > 0){
-dataArr.push({number:num, amount:val});
+if(val>0){
+dataArr.push({number:num,amount:val});
 }
 
 updateTotal();
 }
 
-// 🔥 CROSSING FIX (same tera system)
+// CROSSING FIX
 function generateCross(){
 
-let n1 = num1.value;
-let n2 = num2.value;
-let amt = Number(points.value) || 0;
+let n1=num1.value;
+let n2=num2.value;
+let amt=Number(points.value)||0;
 
-if(!n1 || !n2 || !amt){
-alert("Fill all");
-return;
-}
+if(!n1||!n2||!amt){alert("Fill all");return;}
+
+dataArr = dataArr.filter(i=>!i.crossing);
 
 crossGrid.innerHTML="";
 
-for(let i=0;i<n1.length;i++){
-for(let j=0;j<n2.length;j++){
+for(let i of n1){
+for(let j of n2){
 
-let pair = n1[i]+n2[j];
+let pair=i+j;
 
-dataArr.push({
-number: pair,
-amount: amt
-});
+dataArr.push({number:pair,amount:amt,crossing:true});
 
-crossGrid.innerHTML += `<div class="box">${pair}<br>₹${amt}</div>`;
+crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${amt}</div>`;
 }
 }
 
 updateTotal();
+}
+
+// COPY FIX
+function generateCopy(){
+
+let d=digits.value;
+let a=Number(amt.value);
+let type=document.querySelector('input[name="p"]:checked').value;
+
+if(!d||!a){alert("Fill data");return;}
+
+dataArr = dataArr.filter(i=>!i.copy);
+copyMap={};
+table.innerHTML=`<tr><th>NUMBER</th><th>AMOUNT</th><th>DEL</th></tr>`;
+
+let arr=d.toString().match(/.{1,2}/g);
+
+arr.forEach(num=>{
+if(num.length==1) num="0"+num;
+
+if(!copyMap[num]) addCopy(num,a);
+
+if(type=="with"){
+let rev=num.split("").reverse().join("");
+if(rev!=num && !copyMap[rev]) addCopy(rev,a);
+}
+});
+
+digits.value="";
+amt.value="";
+
+updateTotal();
+}
+
+function addCopy(num,a){
+copyMap[num]=true;
+dataArr.push({number:num,amount:a,copy:true});
+
+table.innerHTML+=`<tr>
+<td>${num}</td>
+<td>${a}</td>
+<td><button onclick="this.parentElement.parentElement.remove()">X</button></td>
+</tr>`;
 }
 
 // TOTAL
 function updateTotal(){
-let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
+let total=dataArr.reduce((s,i)=>s+i.amount,0);
+total.innerText="₹ "+total;
 document.getElementById("total").innerText="₹ "+total;
 }
 
+// UI
 function showGame(id){
 document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -190,8 +232,8 @@ document.getElementById(id).classList.add("active");
 
 // JODI
 for(let i=0;i<100;i++){
-let num=i.toString().padStart(2,'0');
-jodiGrid.innerHTML+=`<div class="box">${num}<input oninput="add('${num}',this.value)"></div>`;
+let n=i.toString().padStart(2,'0');
+jodiGrid.innerHTML+=`<div class="box">${n}<input oninput="add('${n}',this.value)"></div>`;
 }
 
 // HARUF
