@@ -137,20 +137,18 @@ let num=i.toString().padStart(2,'0');
 jodiGrid.innerHTML+=`<div class="box">${num}<input oninput="add('${num}',this.value)"></div>`;
 }
 
-// HARUF
+// HARUF FIX
 for(let i=0;i<10;i++){
-harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
-harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
+harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('A${i}',this.value)"></div>`;
+harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('B${i}',this.value)"></div>`;
 }
 
-// ✅ FIXED ADD
+// ADD
 function add(num,val){
 val = Number(val)||0;
 
-// remove old
 dataArr = dataArr.filter(item => item.number !== num);
 
-// add new
 if(val > 0){
 dataArr.push({number:num, amount:val});
 }
@@ -158,39 +156,53 @@ dataArr.push({number:num, amount:val});
 updateTotal();
 }
 
-// CROSSING
+// CROSSING FIX
 function generateCross(){
-let n1=num1.value,n2=num2.value,a=Number(points.value);
+let n1=document.getElementById("num1").value;
+let n2=document.getElementById("num2").value;
+let a=Number(document.getElementById("points").value);
 
 if(!n1 || !n2 || a<=0) return alert("Fill all");
 
+crossGrid.innerHTML="";
+
 for(let i of n1){
 for(let j of n2){
+
 let pair=i+j;
 
-// remove duplicate first
 dataArr = dataArr.filter(item => item.number !== pair);
 
 dataArr.push({number:pair, amount:a});
+
+crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${a}</div>`;
 }
 }
 
 updateTotal();
 }
 
-// COPY
+// COPY FIX
+let isAdding = false;
+
 function generateCopy(){
+
+if(isAdding) return;
+isAdding = true;
+
 let d = digits.value;
 let a = Number(amt.value);
 
-if(!d || a<=0) return alert("Fill data");
+if(!d || a<=0){
+isAdding = false;
+return alert("Fill data");
+}
 
 let arr = d.match(/.{1,2}/g);
 
 arr.forEach(num=>{
 if(num.length==1) num="0"+num;
 
-// remove duplicate
 dataArr = dataArr.filter(item => item.number !== num);
 
 dataArr.push({number:num, amount:a});
@@ -199,9 +211,11 @@ table.innerHTML+=`<tr><td>${num}</td><td>${a}</td><td><button onclick="removeRow
 });
 
 updateTotal();
+
+setTimeout(()=>{ isAdding = false; },500);
 }
 
-// DELETE ROW
+// DELETE
 function removeRow(btn,num){
 btn.parentElement.parentElement.remove();
 dataArr = dataArr.filter(item => item.number !== num);
