@@ -133,9 +133,8 @@ const market = localStorage.getItem("market") || "UNKNOWN";
 
 let dataArr=[];
 
-// ✅ FINAL FIXED ADD
+// ADD SYSTEM (same)
 function add(num,val){
-
 val = Number(val) || 0;
 
 dataArr = dataArr.filter(i => i.number !== num);
@@ -144,9 +143,44 @@ if(val > 0){
 dataArr.push({number:num, amount:val});
 }
 
-let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
+updateTotal();
+}
 
-document.getElementById("total").innerText = "₹ " + total;
+// 🔥 CROSSING FIX (same tera system)
+function generateCross(){
+
+let n1 = num1.value;
+let n2 = num2.value;
+let amt = Number(points.value) || 0;
+
+if(!n1 || !n2 || !amt){
+alert("Fill all");
+return;
+}
+
+crossGrid.innerHTML="";
+
+for(let i=0;i<n1.length;i++){
+for(let j=0;j<n2.length;j++){
+
+let pair = n1[i]+n2[j];
+
+dataArr.push({
+number: pair,
+amount: amt
+});
+
+crossGrid.innerHTML += `<div class="box">${pair}<br>₹${amt}</div>`;
+}
+}
+
+updateTotal();
+}
+
+// TOTAL
+function updateTotal(){
+let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
+document.getElementById("total").innerText="₹ "+total;
 }
 
 function showGame(id){
@@ -164,11 +198,6 @@ jodiGrid.innerHTML+=`<div class="box">${num}<input oninput="add('${num}',this.va
 for(let i=0;i<10;i++){
 harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
-}
-
-function totalBox(){
-let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
-document.getElementById("total").innerText="₹ "+total;
 }
 
 </script>
