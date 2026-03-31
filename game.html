@@ -257,7 +257,12 @@ await client.from("login").update({balance:newBal}).eq("id",user.id);
 wallet.innerText="₹ "+newBal;
 
 alert("Submit OK ✅");
+// ✅ ALL INPUT CLEAR
+document.querySelectorAll("input").forEach(i=>{
+if(i.type !== "file") i.value="";
+});
 
+document.querySelectorAll("textarea").forEach(t=>t.value="");
 // clear
 digits.value="";
 amt.value="";
