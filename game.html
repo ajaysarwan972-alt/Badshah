@@ -107,6 +107,22 @@ input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;
 
 <script>
 
+// ✅ WALLET SYSTEM (ONLY ADD)
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+const user = JSON.parse(localStorage.getItem("user"));
+
+async function loadWallet(){
+let {data}=await client.from("login").select("balance").eq("id",user.id).single();
+document.getElementById("wallet").innerText="₹ "+data.balance;
+document.getElementById("userId").innerText="ID: "+user.id;
+}
+loadWallet();
+// ✅ END WALLET
+
 let dataArr=[];
 let copyMap={};
 
@@ -210,7 +226,6 @@ function submitAll(){
 
 alert("Submitted");
 
-// clear only here
 digits.value="";
 amt.value="";
 num1.value="";
