@@ -150,9 +150,7 @@ updateTotal();
 // CROSSING FIX
 function generateCross(){
 
-let n1=num1.value;
-let n2=num2.value;
-let amt=Number(points.value)||0;
+
 
 if(!n1||!n2||!amt){alert("Fill all");return;}
 
@@ -177,8 +175,6 @@ updateTotal();
 // COPY FIX
 function generateCopy(){
 
-let d=digits.value;
-let a=Number(amt.value);
 let type=document.querySelector('input[name="p"]:checked').value;
 
 if(!d||!a){alert("Fill data");return;}
