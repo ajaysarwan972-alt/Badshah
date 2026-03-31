@@ -131,22 +131,28 @@ const client = supabase.createClient(
 const user = JSON.parse(localStorage.getItem("user"));
 const market = localStorage.getItem("market") || "UNKNOWN";
 
-let total=0;
 let dataArr=[];
-let addedMap = {}; // 🔥 FIX
+
+// ✅ FINAL FIXED ADD
+function add(num,val){
+
+val = Number(val) || 0;
+
+dataArr = dataArr.filter(i => i.number !== num);
+
+if(val > 0){
+dataArr.push({number:num, amount:val});
+}
+
+let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
+
+document.getElementById("total").innerText = "₹ " + total;
+}
 
 function showGame(id){
 document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
-
-// wallet
-async function loadWallet(){
-let {data}=await client.from("login").select("balance").eq("id",user.id).single();
-wallet.innerText="₹ "+data.balance;
-userId.innerText="ID: "+user.id;
-}
-loadWallet();
 
 // JODI
 for(let i=0;i<100;i++){
@@ -160,33 +166,8 @@ harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.valu
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 }
 
-// 🔥 FIXED ADD
-function add(num,val){
-val = Number(val) || 0;
-
-if(addedMap[num]){
-total -= addedMap[num];
-}
-
-if(val > 0){
-addedMap[num] = val;
-
-dataArr = dataArr.filter(item => item.number !== num);
-dataArr.push({number:num, amount:val});
-
-total += val;
-
-}else{
-delete addedMap[num];
-dataArr = dataArr.filter(item => item.number !== num);
-}
-
-totalBox();
-}
-
-// बाकी code same...
-
 function totalBox(){
+let total = dataArr.reduce((sum,i)=>sum+i.amount,0);
 document.getElementById("total").innerText="₹ "+total;
 }
 
