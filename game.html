@@ -107,7 +107,6 @@ input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;
 
 <script>
 
-// ✅ WALLET SYSTEM (ONLY ADD)
 const client = supabase.createClient(
 "https://katbdbzoufiblnnsoxkk.supabase.co",
 "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
@@ -121,7 +120,6 @@ document.getElementById("wallet").innerText="₹ "+data.balance;
 document.getElementById("userId").innerText="ID: "+user.id;
 }
 loadWallet();
-// ✅ END WALLET
 
 let dataArr=[];
 let copyMap={};
@@ -209,20 +207,35 @@ document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
-// JODI
 for(let i=0;i<100;i++){
 let n=i.toString().padStart(2,'0');
 jodiGrid.innerHTML+=`<div class="box">${n}<input oninput="add('${n}',this.value)"></div>`;
 }
 
-// HARUF
 for(let i=0;i<10;i++){
 harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('${i}',this.value)"></div>`;
 }
 
-// SUBMIT
-function submitAll(){
+// ✅ FINAL SUBMIT
+async function submitAll(){
+
+let total = dataArr.reduce((s,i)=>s+i.amount,0);
+
+if(total<=0){ alert("No data"); return; }
+
+let {data:userData} = await client.from("login").select("balance").eq("id",user.id).single();
+
+if(userData.balance < total){
+alert("Insufficient Balance");
+return;
+}
+
+let newBal = userData.balance - total;
+
+await client.from("login").update({balance:newBal}).eq("id",user.id);
+
+document.getElementById("wallet").innerText="₹ "+newBal;
 
 alert("Submitted");
 
