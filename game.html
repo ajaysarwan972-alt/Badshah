@@ -38,7 +38,39 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
 
 .bottom{position:fixed;bottom:0;width:100%;display:flex;}
 .total{width:50%;background:linear-gradient(to right,blue,red);color:#fff;text-align:center;padding:15px;}
-.submit{width:50%;background:green;color:#fff;text-align:center;padding:15px;}
+
+.submit{
+width:50%;
+background:green;
+color:#fff;
+text-align:center;
+padding:15px;
+font-weight:bold;
+font-size:16px;
+cursor:pointer;
+}
+
+.popup{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#222;
+color:#fff;
+padding:20px;
+border-radius:15px;
+display:none;
+z-index:9999;
+text-align:center;
+}
+.popup button{
+margin-top:10px;
+padding:8px 20px;
+border:none;
+background:#00b894;
+color:#fff;
+border-radius:10px;
+}
 </style>
 </head>
 
@@ -100,6 +132,12 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
 <div class="submit" onclick="submitAll()">SUBMIT</div>
 </div>
 
+<!-- POPUP -->
+<div class="popup" id="popup">
+<div id="popupText"></div>
+<button onclick="closePopup()">OK</button>
+</div>
+
 <script>
 
 const client = supabase.createClient(
@@ -112,6 +150,15 @@ const market = localStorage.getItem("market") || "UNKNOWN";
 
 let dataArr = [];
 let total = 0;
+
+function showPopup(text){
+document.getElementById("popupText").innerText = text;
+document.getElementById("popup").style.display = "block";
+}
+function closePopup(){
+document.getElementById("popup").style.display = "none";
+location.reload();
+}
 
 function updateTotal(){
 total = 0;
@@ -137,7 +184,7 @@ let num=i.toString().padStart(2,'0');
 jodiGrid.innerHTML+=`<div class="box">${num}<input oninput="add('${num}',this.value)"></div>`;
 }
 
-// HARUF FIX
+// HARUF (UNCHANGED SYSTEM ✅)
 for(let i=0;i<10;i++){
 harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('A${i}',this.value)"></div>`;
 harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('B${i}',this.value)"></div>`;
@@ -158,9 +205,9 @@ updateTotal();
 
 // CROSSING FIX
 function generateCross(){
-let n1=document.getElementById("num1").value;
-let n2=document.getElementById("num2").value;
-let a=Number(document.getElementById("points").value);
+let n1=num1.value;
+let n2=num2.value;
+let a=Number(points.value);
 
 if(!n1 || !n2 || a<=0) return alert("Fill all");
 
@@ -169,10 +216,9 @@ crossGrid.innerHTML="";
 for(let i of n1){
 for(let j of n2){
 
-let pair=i+j;
+let pair = String(i+j).padStart(2,'0');
 
 dataArr = dataArr.filter(item => item.number !== pair);
-
 dataArr.push({number:pair, amount:a});
 
 crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${a}</div>`;
@@ -182,48 +228,45 @@ crossGrid.innerHTML+=`<div class="box">${pair}<br>₹${a}</div>`;
 updateTotal();
 }
 
-// COPY FIX
-let isAdding = false;
+// COPY same
+let isAdding=false;
 
 function generateCopy(){
-
 if(isAdding) return;
-isAdding = true;
+isAdding=true;
 
-let d = digits.value;
-let a = Number(amt.value);
+let d=digits.value;
+let a=Number(amt.value);
 
 if(!d || a<=0){
-isAdding = false;
+isAdding=false;
 return alert("Fill data");
 }
 
-let arr = d.match(/.{1,2}/g);
+let arr=d.match(/.{1,2}/g);
 
 arr.forEach(num=>{
 if(num.length==1) num="0"+num;
 
 dataArr = dataArr.filter(item => item.number !== num);
-
 dataArr.push({number:num, amount:a});
 
 table.innerHTML+=`<tr><td>${num}</td><td>${a}</td><td><button onclick="removeRow(this,'${num}')">X</button></td></tr>`;
 });
 
 updateTotal();
-
-setTimeout(()=>{ isAdding = false; },500);
+setTimeout(()=>{isAdding=false;},500);
 }
 
-// DELETE
 function removeRow(btn,num){
 btn.parentElement.parentElement.remove();
 dataArr = dataArr.filter(item => item.number !== num);
 updateTotal();
 }
 
-// SUBMIT
+// ✅ FINAL SUBMIT FIX (A/B SUPPORT)
 async function submitAll(){
+
 if(total<=0){alert("No data");return;}
 
 let {data}=await client.from("login").select("balance").eq("id",user.id).single();
@@ -233,17 +276,43 @@ alert("Low balance");
 return;
 }
 
-await client.from("login").update({balance:data.balance-total}).eq("id",user.id);
+await client.from("login").update({
+balance:data.balance-total
+}).eq("id",user.id);
+
+// 🔥 FORMAT FIX
+let finalData = dataArr.map(item => {
+
+let num = item.number;
+let type = "";
+let number = num;
+
+if(num.startsWith("A")){
+type="A";
+number=num.replace("A","");
+}
+else if(num.startsWith("B")){
+type="B";
+number=num.replace("B","");
+}
+
+return {
+number:number,
+type:type || null,
+amount:item.amount
+};
+
+});
 
 await client.from("history").insert([{
 user_id:user.id,
 market:market,
-data:JSON.stringify(dataArr),
+data:JSON.stringify(finalData),
 total:total
 }]);
 
-alert("Done");
-location.reload();
+showPopup("Game Submitted ✅ Balance Cut Ho Gaya");
+
 }
 
 </script>
