@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Setup</title>
+
+<style>
+body { font-family: Arial; padding: 20px; background:#f1f5f9; }
+
+.box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+max-width:400px;
+margin:auto;
+text-align:center;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.approve{background:green;color:#fff;}
+.cancel{background:red;color:#fff;}
+
+#qrPreview{
+width:100%;
+border-radius:10px;
+margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>QR Code Setup</h2>
+
+<input type="file" id="qrFile"><br>
+
+<button onclick="uploadQR()" class="approve">Update QR</button>
+<button onclick="deleteQR()" class="cancel">Delete QR</button>
+
+<img id="qrPreview">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const client = supabase.createClient(
+"https://katbdbzoufiblnnsoxkk.supabase.co",
+"sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
+);
+
+// LOAD QR
+async function loadQR(){
+let { data } = await client.from("settings").select("qr").eq("name","payment").single();
+if(data?.qr){ document.getElementById("qrPreview").src = data.qr; }
+}
+
+// UPLOAD
+async function uploadQR(){
+let file = document.getElementById("qrFile").files[0];
+if(!file){ alert("Select file"); return; }
+
+let fileName = "qr_"+Date.now();
+
+await client.storage.from("screenshots").upload(fileName, file);
+
+let { data } = client.storage.from("screenshots").getPublicUrl(fileName);
+
+await client.from("settings").update({qr:data.publicUrl}).eq("name","payment");
+
+alert("QR Updated");
+loadQR();
+}
+
+// DELETE
+async function deleteQR(){
+await client.from("settings").update({qr:null}).eq("name","payment");
+document.getElementById("qrPreview").src="";
+}
+
+loadQR();
+</script>
+
+</body>
+</html>
