@@ -89,7 +89,8 @@ font-size:13px;
 <!-- IMAGE -->
 <div id="imageBox" class="hide">
 
-<input type="file" id="imageInput">
+<button onclick="document.getElementById('imageInput').click()">Select Image</button>
+<input type="file" id="imageInput" accept="image/*" style="display:none;">
 <input type="number" id="imageAmount" placeholder="Enter Total Amount">
 
 <div class="submit" onclick="submitImage()">SUBMIT</div>
@@ -117,34 +118,33 @@ const client = supabase.createClient(
 "sb_publishable_--fdpQMmSlUyt2ywjUErgQ_LXGvQH-a"
 );
 
+// ✅ USER FIX
 const user = JSON.parse(localStorage.getItem("user"));
+if(!user){
+  alert("Login again");
+  window.location.href="index.html";
+}
+
 const market = localStorage.getItem("market");
 
-// 🔥 WALLET LOAD (FIXED SAFE)
+// WALLET LOAD
 async function loadWallet(){
-if(!user) return;
-
-let {data}=await client
-.from("login")
-.select("balance")
-.eq("id",user.id)
-.single();
-
+let {data}=await client.from("login").select("balance").eq("id",user.id).single();
 if(data){
-document.getElementById("wallet").innerText="₹ "+data.balance;
-document.getElementById("userId").innerText="ID: "+user.id;
+wallet.innerText="₹ "+data.balance;
+userId.innerText="ID: "+user.id;
 }
 }
 loadWallet();
 
-// switch
+// SWITCH
 function showBox(id){
 document.getElementById("typingBox").classList.add("hide");
 document.getElementById("imageBox").classList.add("hide");
 document.getElementById(id).classList.remove("hide");
 }
 
-// 🔥 TYPING
+// TYPING
 async function submitTyping(){
 
 let text=document.getElementById("typingData").value;
@@ -177,7 +177,7 @@ alert("Done");
 location.reload();
 }
 
-// 🔥 IMAGE
+// IMAGE
 async function submitImage(){
 
 let file=document.getElementById("imageInput").files[0];
@@ -223,8 +223,10 @@ data:imageUrl,
 total:amount
 }]);
 
-alert("Game Submitted ✅ Balance Cut Ho Gaya");
+alert("Done");
 location.reload();
+}
+
 </script>
 
 </body>
