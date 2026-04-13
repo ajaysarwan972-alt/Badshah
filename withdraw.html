@@ -27,9 +27,14 @@ input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px soli
 .change{ background:orange; }
 .bank{ background:#4facfe; }
 
-.main-btn{width:100%;padding:15px;border:none;border-radius:15px;background:#ff4d4d;color:#fff;font-weight:bold;margin-top:15px;}
+.main-btn{width:100%;padding:15px;border:none;border-radius:15px;background:#7cc84a;color:#fff;font-weight:bold;margin-top:15px;}
 
 #savedQR img{width:150px;border-radius:10px;}
+
+.rules{background:#fff;padding:20px;border-radius:20px;}
+.rules h3{margin-bottom:10px;}
+.rules ul{padding-left:20px;}
+.rules li{margin-bottom:10px;}
 </style>
 </head>
 
@@ -41,7 +46,7 @@ input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px soli
 <div class="card" id="step1">
 <h3>Withdraw Request</h3>
 <input type="number" id="amount" placeholder="Enter Amount">
-<button class="main-btn" onclick="goStep2()">SUBMIT</button>
+<button class="main-btn" onclick="goStep2()">WITHDRAW NOW</button>
 </div>
 
 <div class="card" id="step2" style="display:none;">
@@ -58,7 +63,7 @@ input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px soli
 
 <div class="row">
 <button class="btn change" onclick="openChangeQR()">CHANGE QR</button>
-<button class="btn bank" onclick="openBank()">BANK WITHDRAW</button>
+<button class="btn bank" onclick="openBank()">BANK</button>
 </div>
 </div>
 
@@ -69,11 +74,22 @@ input{width:100%;padding:12px;margin-top:10px;border-radius:10px;border:1px soli
 </div>
 
 <div class="card" id="bankForm" style="display:none;">
-<input type="text" id="name" placeholder="Account Holder Name">
-<input type="text" id="acc1" placeholder="Account Number">
-<input type="text" id="acc2" placeholder="Re-enter Account Number">
-<input type="text" id="ifsc" placeholder="IFSC Code">
+<input type="text" id="nameInput" placeholder="Account Holder Name">
+<input type="text" id="acc1Input" placeholder="Account Number">
+<input type="text" id="acc2Input" placeholder="Re-enter Account Number">
+<input type="text" id="ifscInput" placeholder="IFSC Code">
 <button class="main-btn" onclick="submitBank()">SUBMIT</button>
+</div>
+
+<!-- 🔥 RULES SECTION -->
+<div class="rules">
+<h3>पैसे निकालने के नियम</h3>
+<ul>
+<li>कम से कम 300 रुपए का withdraw लगा सकते है।</li>
+<li>पैसे निकालने का समय सुबह 8 बजे से शाम 7 बजे तक रहेगा।</li>
+<li>कृपया बैंक डिटेल्स और UPI डिटेल्स ध्यान से भरें, गलत जानकारी पर कोई जिम्मेदारी नहीं होगी।</li>
+<li>Withdraw के बाद 1 घंटे तक इंतजार करें, फिर हेल्पलाइन पर संपर्क करें।</li>
+</ul>
 </div>
 
 <script>
@@ -97,13 +113,20 @@ function loadQR(){
 }
 loadQR()
 
-function openChangeQR(){
-    changeQR.style.display="block"
-}
-
 function goStep2(){
-    let amt=amount.value
+    let amt = parseInt(amount.value)
+
     if(!amt) return alert("Amount daal")
+
+    if(amt < 300){
+        return alert("Minimum withdraw ₹300 hai ❌")
+    }
+
+    let hour = new Date().getHours()
+    if(hour < 8 || hour >= 19){
+        return alert("Withdraw sirf 8 AM se 7 PM tak allowed hai ⏰")
+    }
+
     localStorage.setItem("withdraw_amount",amt)
     showAmount.innerText=amt
     step1.style.display="none"
@@ -113,6 +136,10 @@ function goStep2(){
 function goBack(){
     step2.style.display="none"
     step1.style.display="block"
+}
+
+function openChangeQR(){
+    changeQR.style.display="block"
 }
 
 function previewNewQR(){
@@ -135,7 +162,7 @@ async function saveQR(){
 
     localStorage.setItem("user_qr",data.publicUrl)
 
-    loadQR() // 🔥 instant show
+    loadQR()
     changeQR.style.display="none"
 
     alert("QR Saved ✅")
@@ -143,16 +170,23 @@ async function saveQR(){
 
 async function submitWithdraw(){
 
-    let amount=parseInt(localStorage.getItem("withdraw_amount"))
-    let qr=localStorage.getItem("user_qr")
+    let hour = new Date().getHours()
+    if(hour < 8 || hour >= 19){
+        return alert("Withdraw sirf 8 AM se 7 PM tak allowed hai ⏰")
+    }
 
+    let amount=parseInt(localStorage.getItem("withdraw_amount"))
+    if(amount < 300){
+        return alert("Minimum withdraw ₹300 hai ❌")
+    }
+
+    let qr=localStorage.getItem("user_qr")
     if(!qr) return alert("QR save kar")
 
     let { data }=await client.from("login").select("balance").eq("id",user.id).single()
 
     if(data.balance < amount){
-        alert("Balance kam hai ❌")
-        return
+        return alert("Balance kam hai ❌")
     }
 
     let newBalance=data.balance - amount
@@ -167,7 +201,7 @@ async function submitWithdraw(){
         status:"pending"
     })
 
-    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
+    alert("Withdraw request sent ✅")
     location.reload()
 }
 
@@ -177,19 +211,27 @@ function openBank(){
 
 async function submitBank(){
 
+    let hour = new Date().getHours()
+    if(hour < 8 || hour >= 19){
+        return alert("Withdraw sirf 8 AM se 7 PM tak allowed hai ⏰")
+    }
+
     let name=nameInput.value
     let acc1=acc1Input.value
     let acc2=acc2Input.value
     let ifsc=ifscInput.value
     let amount=parseInt(localStorage.getItem("withdraw_amount"))
 
+    if(amount < 300){
+        return alert("Minimum withdraw ₹300 hai ❌")
+    }
+
     if(acc1!==acc2) return alert("Account match nahi")
 
     let { data }=await client.from("login").select("balance").eq("id",user.id).single()
 
     if(data.balance < amount){
-        alert("Balance kam hai ❌")
-        return
+        return alert("Balance kam hai ❌")
     }
 
     let newBalance=data.balance - amount
@@ -204,7 +246,7 @@ async function submitBank(){
         status:"pending"
     })
 
-    alert("Withdraw Clear, wait for 5 min to 1 hour ✅")
+    alert("Withdraw request sent ✅")
     location.reload()
 }
 </script>
