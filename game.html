@@ -40,12 +40,10 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
 <div class="topBtn btn5" onclick="window.location.href='play.html'">TYP/IMAGE</div>
 </div>
 
-<!-- JODI -->
 <div id="jodi" class="game active container">
 <div class="grid" id="jodiGrid"></div>
 </div>
 
-<!-- HARUF -->
 <div id="haruf" class="game container">
 <h3>Single Andar</h3>
 <div class="grid" id="harufGrid1"></div>
@@ -53,25 +51,23 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
 <div class="grid" id="harufGrid2"></div>
 </div>
 
-<!-- CROSSING -->
 <div id="crossing" class="game container">
 <label>1ST NUMBER</label>
-<input id="num1" type="tel">
+<input id="num1" type="tel" inputmode="numeric" oninput="onlyNumber(this)">
 <label>2ND NUMBER</label>
-<input id="num2" type="tel">
+<input id="num2" type="tel" inputmode="numeric" oninput="onlyNumber(this)">
 <label>POINTS</label>
-<input id="points" type="tel">
+<input id="points" type="tel" inputmode="numeric" oninput="onlyNumber(this)">
 <button onclick="generateCross()">SET</button>
 
 <div id="crossGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px;"></div>
 </div>
 
-<!-- COPY -->
 <div id="copy" class="game container">
 <label>ENTER DIGIT</label>
-<input id="digits" type="tel">
+<input id="digits" type="tel" inputmode="numeric" oninput="onlyNumber(this)">
 <label>ENTER AMOUNT</label>
-<input id="amt" type="tel">
+<input id="amt" type="tel" inputmode="numeric" oninput="onlyNumber(this)">
 <button onclick="generateCopy()">ADD</button>
 
 <table id="table" border="1" width="100%">
@@ -85,6 +81,11 @@ input{width:100%;padding:10px;border-radius:10px;border:1px solid #ccc;}
 </div>
 
 <script>
+
+// 🔥 NUMBER ONLY FUNCTION
+function onlyNumber(input){
+  input.value = input.value.replace(/[^0-9]/g,'');
+}
 
 const client = supabase.createClient(
 "https://katbdbzoufiblnnsoxkk.supabase.co",
@@ -124,13 +125,20 @@ document.getElementById(id).classList.add("active");
 // JODI
 for(let i=0;i<100;i++){
 let num=i.toString().padStart(2,'0');
-jodiGrid.innerHTML+=`<div class="box">${num}<input oninput="add('${num}',this.value)"></div>`;
+jodiGrid.innerHTML+=`<div class="box">${num}
+<input type="tel" inputmode="numeric" oninput="onlyNumber(this); add('${num}',this.value)">
+</div>`;
 }
 
 // HARUF
 for(let i=0;i<10;i++){
-harufGrid1.innerHTML+=`<div class="box">${i}<input oninput="add('A${i}',this.value)"></div>`;
-harufGrid2.innerHTML+=`<div class="box">${i}<input oninput="add('B${i}',this.value)"></div>`;
+harufGrid1.innerHTML+=`<div class="box">${i}
+<input type="tel" inputmode="numeric" oninput="onlyNumber(this); add('A${i}',this.value)">
+</div>`;
+
+harufGrid2.innerHTML+=`<div class="box">${i}
+<input type="tel" inputmode="numeric" oninput="onlyNumber(this); add('B${i}',this.value)">
+</div>`;
 }
 
 function add(num,val){
